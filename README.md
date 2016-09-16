@@ -15,9 +15,9 @@ There are 3 files present in the VM's /vagrant directory
 ## Installation
 
 Prerequisites:
-1. Git
-2. Virtual Box
-3. vagrant
+1.  Git
+2.  Virtual Box
+3.  vagrant
 
 ##### Steps:
 
