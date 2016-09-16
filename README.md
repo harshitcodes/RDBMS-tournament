@@ -30,7 +30,7 @@ Prerequisites:
 6. Now you have a directory named tournament
 7. Run ```vagrant up```
 8. Log into vagrant VM: ```vagrant ssh```
-9 cs into /vagrant/tournament/
+9 cd into ```/vagrant/RDBMS-tournament/```
 10.Create tournament database by starting psql by running ```psql```
-..* run ```\i tournament.sql```
+and run ```\i tournament.sql``` after that exit by ```\q```
 11. Then come out of the psql and run ```python tournament_test.py``` to test the code.
