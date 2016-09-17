@@ -22,10 +22,9 @@ CREATE TABLE players(
 
 CREATE TABLE matches(
     id serial PRIMARY KEY,
-    round_number serial,
-    player_one_id serial NOT NULL REFERENCES players (id), -- referential integrity with the playerstable
-    player_two_id serial NOT NULL REFERENCES players (id),
-    winner_id serial NOT NULL REFERENCES players (id)
+    player_one_id int NOT NULL REFERENCES players (id), -- referential integrity with the playerstable
+    player_two_id int NOT NULL REFERENCES players (id),
+    winner_id int DEFAULT 0
 );
 
 
