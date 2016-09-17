@@ -6,7 +6,6 @@
 import psycopg2
 
 
-
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
@@ -17,8 +16,6 @@ def deleteMatches():
     DB = connect()
     db_cursor = DB.cursor()
     db_cursor.execute("DELETE FROM matches;")
-    db_cursor.execute("UPDATE players " "SET wins = 0;")  #sanitized
-    db_cursor.execute("UPDATE players " "SET losses = 0;")
     DB.commit()
     DB.close()
 
@@ -37,9 +34,10 @@ def countPlayers():
     DB = connect()
     db_cursor = DB.cursor()
     db_cursor.execute("SELECT count(*) FROM players;")
-    num = db_cursor.fetchall()
+    num = db_cursor.fetchone()[0]
+    db_cursor.close()
     DB.close()
-    return num[0][0]
+    return num
 
 
 def registerPlayer(name):
@@ -54,7 +52,7 @@ def registerPlayer(name):
     DB = connect()
     db_cursor = DB.cursor()
     # inserting the player with name wins and losses(initialized)
-    db_cursor.execute("INSERT INTO players (name, wins, losses)" "VALUES" "(%s, %s, %s);", (name, 0, 0))
+    db_cursor.execute("INSERT INTO players (name)" "VALUES" "(%s);", (name,))
     DB.commit()
 
 
@@ -86,25 +84,34 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
+
     DB = connect()
-    db_cursor = DB.cursor()
-    db_cursor.execute("select MAX(round_number) FROM matches;")
-    max = db_cursor.fetchall()[0][0]
-    if max is None:
-        max = 0
-
-    # insert info about the match results
-    db_cursor.execute("INSERT INTO matches("
-              "round_number, player_one_id, player_two_id, winner_id)"
-              "VALUES"
-              "(%s, %s, %s, %s);",
-              (int(max+1), int(winner), int(loser), int(winner),))
-
-    # updating the players table using the results
-    db_cursor.execute("UPDATE players " "SET wins = wins + 1 " "WHERE id = %s;", (int(winner),))  #sanitized
-    db_cursor.execute("UPDATE players " "SET losses = losses + 1 " "WHERE id = %s;", (int(loser),))
+    cursor = DB.cursor()
+    cursor.execute("INSERT INTO matches(player_one_id,player_two_id,winner_id)"
+    " VALUES (%s,%s,%s)" , (winner,loser,winner))
     DB.commit()
+    cursor.close()
     DB.close()
+
+    # DB = connect()
+    # db_cursor = DB.cursor()
+    # db_cursor.execute("select MAX(round_number) FROM matches;")
+    # max = db_cursor.fetchall()[0][0]
+    # if max is None:
+    #     max = 0
+
+    # # insert info about the match results
+    # db_cursor.execute("INSERT INTO matches("
+    #           "round_number, player_one_id, player_two_id, winner_id)"
+    #           "VALUES"
+    #           "(%s, %s, %s, %s);",
+    #           (int(max+1), int(winner), int(loser), int(winner),))
+
+    # # updating the players table using the results
+    # db_cursor.execute("UPDATE players " "SET wins = wins + 1 " "WHERE id = %s;", (int(winner),))  #sanitized
+    # db_cursor.execute("UPDATE players " "SET losses = losses + 1 " "WHERE id = %s;", (int(loser),))
+    # DB.commit()
+    # DB.close()
 
 
 def swissPairings():
@@ -123,10 +130,20 @@ def swissPairings():
         name2: the second player's name
     """
     DB = connect()
-    c = DB.cursor()
-    c.execute("SELECT * FROM swiss_pair;")
-    swiss = c.fetchall()
+    db_cursor = DB.cursor()
+    db_cursor.execute("SELECT ID,name,wins FROM standings ORDER BY wins DESC;")
+    rows = db_cursor.fetchall()
     DB.close()
-    return swiss
+    i=0
+    pairings = []
+    while i < len(rows):
+        playerAid = rows[i][0]
+        playerAname = rows[i][1]
+        playerBid = rows[i+1][0]
+        playerBname = rows[i+1][1]
+        pairings.append((playerAid,playerAname,playerBid,playerBname))
+        i=i+2
+
+    return pairings
 
 

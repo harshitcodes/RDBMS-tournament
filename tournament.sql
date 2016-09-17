@@ -3,23 +3,21 @@
 -- Put your SQL 'create table' statements in this file; also 'create view'
 -- statements if you choose to use it.
 --
--- You can write comments in this file by starting them with two dashes, like
+-- You can write comments in this file by starting them with two dAShes, like
 -- these lines here.
 
 
 DROP DATABASE IF EXISTS tournament;
 CREATE DATABASE tournament;
 
--- Connecting to the database tournament
+-- Connecting to the databASe tournament
 \c tournament
 
 
 CREATE TABLE players(
     -- tournament varchar(3),
     id serial PRIMARY KEY,
-    name TEXT NOT NULL,
-    wins integer NOT NULL,
-    losses integer NOT NULL
+    name TEXT NOT NULL
 );
 
 CREATE TABLE matches(
@@ -31,51 +29,39 @@ CREATE TABLE matches(
 );
 
 
--- view for standings
-
-CREATE VIEW standings as
-    select
-        id,
-        name,
-        wins,
-        (wins + losses) as match_total
-
-    from players
-    order by wins;
-
--- view for ranking and deciding the bye distribution based on the wins and id of the players
-
-CREATE VIEW ranking as
-    select
-        id,
-        name,
-        wins,
-        RANK() OVER (ORDER BY wins DESC, id ASC) as rank
-    from players
-    order by rank;
-
-
--- swiss pairing for the fixture of matches along with the ranking view
-create view swiss_pair as
-    select
-        a.id,
-        a.name,
-        b.id as opp_id,
-        b.name as opp_win
-    from
-        ranking as a,
-        ranking as b
-    where
-        a.id != b.id
-        and
-        a.rank = (b.rank - 1)
-        and
-        mod(a.rank, 2) = 1
-    order by
-        a.rank,
-        a.id;
+-- view for stANDings
 
 
 
+-- view for ranking AND deciding the bye distribution bASed on the wins AND id of the players
 
 
+create view wincounter AS
+    SELECT
+        players.id,
+        players.name,
+        count(matches.winner_id) AS wins
+    FROM players
+        LEFT JOIN matches
+            on players.id = matches.winner_id
+    GROUP BY
+        players.id;
+
+CREATE VIEW totalmatches AS
+    SELECT players.id,
+    players.name,
+    count(matches.id) AS matches
+   FROM (players
+     LEFT JOIN matches ON (((players.id = matches.player_one_id) OR (players.id = matches.player_two_id))))
+  GROUP BY players.id
+  ORDER BY players.id;
+
+CREATE VIEW standings AS
+ SELECT players.id,
+    players.name,
+    wincounter.wins,
+    totalmatches.matches
+   FROM ((players
+     JOIN wincounter ON ((players.id = wincounter.id)))
+     LEFT JOIN totalmatches ON ((players.id = totalmatches.id)))
+  ORDER BY wincounter.wins DESC;
